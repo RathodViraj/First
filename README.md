@@ -28,7 +28,7 @@ First/
 ## Setup
 1. **Clone the repository:**
    ```sh
-   git clone <your-repo-url>
+   git clone github.com/RathodViraj/First/
    cd First
    ```
 2. **Configure your database:**
