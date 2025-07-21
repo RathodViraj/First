@@ -1,7 +1,7 @@
 package main
 
 import (
-	chachingservice "First/chachingService"
+	chachingservice "First/chachingservice"
 	"First/db"
 	"First/handler"
 	"First/middleware"

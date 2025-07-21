@@ -1,7 +1,7 @@
 package handler
 
 import (
-	chachingService "First/chachingService"
+	chachingService "First/chachingservice"
 	"First/model"
 	"First/service"
 	"net/http"

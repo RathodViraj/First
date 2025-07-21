@@ -1,4 +1,4 @@
-package chachingService
+package chachingservice
 
 import (
 	"First/model"
