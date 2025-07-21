@@ -37,7 +37,7 @@ func (h *ConnectionHandler) FollowUser(ctx *gin.Context) {
 
 	chachingservice.InvalidateUserFollowersCache(ctx, followingID)
 	chachingservice.InvalidateUserFollowingsCache(ctx, followerID)
-	chachingservice.InvalidateMutalCache(ctx, followerID)
+	chachingservice.InvalidatemutualCache(ctx, followerID)
 
 	ctx.Status(http.StatusCreated)
 }
@@ -62,7 +62,7 @@ func (h *ConnectionHandler) UnfollowUser(ctx *gin.Context) {
 
 	chachingservice.InvalidateUserFollowersCache(ctx, followingID)
 	chachingservice.InvalidateUserFollowingsCache(ctx, followerID)
-	chachingservice.InvalidateMutalCache(ctx, followerID)
+	chachingservice.InvalidatemutualCache(ctx, followerID)
 
 	ctx.Status(http.StatusOK)
 }
@@ -153,8 +153,8 @@ func (h *ConnectionHandler) GetMutual(ctx *gin.Context) {
 	}
 	id = userID
 
-	if mutal := chachingservice.GetFollowingsChached(userID, ctx); len(mutal) > 0 {
-		ctx.IndentedJSON(http.StatusOK, mutal)
+	if mutual := chachingservice.GetFollowingsChached(userID, ctx); len(mutual) > 0 {
+		ctx.IndentedJSON(http.StatusOK, mutual)
 		return
 	}
 
@@ -164,7 +164,7 @@ func (h *ConnectionHandler) GetMutual(ctx *gin.Context) {
 		return
 	}
 
-	chachingservice.ChachedMutals(userID, mutual, ctx)
+	chachingservice.ChachedMutuals(userID, mutual, ctx)
 
 	ctx.IndentedJSON(http.StatusOK, mutual)
 }

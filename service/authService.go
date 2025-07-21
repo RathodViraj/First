@@ -65,16 +65,12 @@ func (s *AuthService) ValidateToken(tokenStr string) (int, string, error) {
 }
 
 func (s *AuthService) Authenticate(login *model.LoginRequest) (*model.User, error) {
-	// Log the email being searched
-	log.Printf("Attempting login for email: %s", login.Email)
 
 	user, err := s.UserSrv.GetUserByEmail(login.Email)
 	if err != nil {
 		log.Printf("Authentication failed for %s: %v", login.Email, err)
 		return nil, errors.New("invalid credentials")
 	}
-
-	log.Printf("User found: ID %d, checking password...", user.Id)
 
 	if !s.CheckPassword(login.Password, user.Password) {
 		log.Printf("Password mismatch for user %d", user.Id)

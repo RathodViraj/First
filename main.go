@@ -9,6 +9,7 @@ import (
 	"First/service"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,11 +17,20 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
 
 func main() {
-	os.Setenv("JWT_SECRET", "your_strong_secret_here")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable is not set")
+	}
 
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
@@ -102,13 +112,13 @@ func main() {
 		users.GET("/:id/home", userHandler.GetFeed)
 	}
 
+	// Conection routes
 	router.GET("/users/:id/followers", connectionHandler.GetFollowers)
 	router.GET("/users/:id/followings", connectionHandler.GetFollowings)
 	router.GET("/users/:id/mutual", connectionHandler.GetMutual)
 	router.POST("/follow/:follower_id/:following_id", connectionHandler.FollowUser)
 	router.DELETE("/unfollow/:follower_id/:following_id", connectionHandler.UnfollowUser)
 
-	// Graceful shutdown
 	srv := &http.Server{
 		Addr:    ":8080",
 		Handler: router,

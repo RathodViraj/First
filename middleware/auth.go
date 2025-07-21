@@ -28,7 +28,7 @@ func GinMiddleware(authService *service.AuthService) gin.HandlerFunc {
 			return
 		}
 
-		c.Set("userID", userID) // Pass userID into context
+		c.Set("userID", userID)
 		c.Set("role", role)
 		c.Next()
 	}

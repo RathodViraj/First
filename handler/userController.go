@@ -130,7 +130,7 @@ func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 		return
 	}
 	user.Id = id
-	user.Password = "" // Do not allow password change
+	user.Password = ""
 
 	if err := h.service.UpdateUser(&user); err != nil {
 		JSONError(ctx, http.StatusInternalServerError, err.Error())

@@ -65,28 +65,28 @@ func InvalidateUserFollowingsCache(ctx context.Context, userId int) {
 	}
 }
 
-func GetChahcedMutal(userID int, ctx context.Context) []model.User {
-	key := fmt.Sprintf("user:Mutal:%d", userID)
+func GetChahcedmutual(userID int, ctx context.Context) []model.User {
+	key := fmt.Sprintf("user:mutual:%d", userID)
 	data, err := RDB.Get(ctx, key).Result()
 	if err == nil && data != "" {
-		var mutals []model.User
-		if err = json.Unmarshal([]byte(data), &mutals); err == nil {
-			return mutals
+		var mutuals []model.User
+		if err = json.Unmarshal([]byte(data), &mutuals); err == nil {
+			return mutuals
 		}
 	}
 
 	return []model.User{}
 }
 
-func ChachedMutals(userID int, mutals []model.User, ctx context.Context) {
-	key := fmt.Sprintf("user:mutal:%d", userID)
-	if data, err := json.Marshal(mutals); err == nil {
+func ChachedMutuals(userID int, mutuals []model.User, ctx context.Context) {
+	key := fmt.Sprintf("user:mutual:%d", userID)
+	if data, err := json.Marshal(mutuals); err == nil {
 		RDB.Set(ctx, key, data, time.Minute*2)
 	}
 }
 
-func InvalidateMutalCache(ctx context.Context, userId int) {
-	key := fmt.Sprintf("user:mutal:%d", userId)
+func InvalidatemutualCache(ctx context.Context, userId int) {
+	key := fmt.Sprintf("user:mutual:%d", userId)
 
 	if err := RDB.Del(ctx, key).Err(); err != nil {
 		log.Println(err.Error())

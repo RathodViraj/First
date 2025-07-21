@@ -27,10 +27,6 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	log.Printf("Parsed login request: %+v", loginReq)
-	log.Printf("Login password: [%s]", loginReq.Password)
-
-	// Trim & validate
 	loginReq.Email = strings.TrimSpace(strings.ToLower(loginReq.Email))
 	loginReq.Password = strings.TrimSpace(loginReq.Password)
 

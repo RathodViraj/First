@@ -2,10 +2,16 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func Connect() (*sql.DB, error) {
-	return sql.Open("mysql", "root:viraj3rathod@tcp(localhost:3306)/test?parseTime=true")
+	dsn := os.Getenv("MYSQL_DSN")
+	if dsn == "" {
+		return nil, fmt.Errorf("MYSQL_DSN environment variable is not set")
+	}
+	return sql.Open("mysql", dsn)
 }
