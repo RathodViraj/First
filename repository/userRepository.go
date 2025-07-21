@@ -15,6 +15,7 @@ type UserRepository interface {
 	Create(user *model.User) error
 	Delete(id, userID int, isAdmin bool) error
 	GetUserFeed(id, offset int) ([]model.Post, error)
+	Update(user *model.User) error
 }
 
 type userRepo struct {
@@ -132,4 +133,13 @@ func (r *userRepo) GetUserFeed(id, offset int) ([]model.Post, error) {
 		feed = append(feed, p)
 	}
 	return feed, nil
+}
+
+func (r *userRepo) Update(user *model.User) error {
+	query := `UPDATE users SET name = ?, email = ? WHERE id = ?`
+	_, err := r.db.Exec(query, user.Name, user.Email, user.Id)
+	if err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+	return nil
 }

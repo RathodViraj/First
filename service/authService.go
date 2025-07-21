@@ -30,10 +30,14 @@ func (s *AuthService) CheckPassword(password, hash string) bool {
 }
 
 func (s *AuthService) GenerateToken(user *model.User) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.Id,
-		"exp": time.Now().Add(time.Minute * 15).Unix(),
-	})
+	log.Printf("Role: %s\n", user.Role)
+
+	claims := jwt.MapClaims{
+		"sub":  user.Id,
+		"exp":  time.Now().Add(time.Hour * 72).Unix(),
+		"role": user.Role,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
@@ -75,6 +79,10 @@ func (s *AuthService) Authenticate(login *model.LoginRequest) (*model.User, erro
 	if !s.CheckPassword(login.Password, user.Password) {
 		log.Printf("Password mismatch for user %d", user.Id)
 		return nil, errors.New("invalid credentials")
+	}
+
+	if user.Role != "user" && user.Role != "admin" {
+		user.Role = "user"
 	}
 
 	return user, nil

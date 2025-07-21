@@ -11,6 +11,7 @@ import (
 type CommentsRepository interface {
 	GetComments(id int) ([]model.Post, error)
 	AddComment(post *model.Post) error
+	UpdateComment(comment *model.Post) error
 }
 
 type commentRepo struct {
@@ -70,5 +71,14 @@ func (r *commentRepo) AddComment(post *model.Post) error {
 		return fmt.Errorf("failed to get last insert ID: %w", err)
 	}
 	post.Id = int(id)
+	return nil
+}
+
+func (r *commentRepo) UpdateComment(comment *model.Post) error {
+	query := `UPDATE posts SET content = ? WHERE id = ? AND uid = ? AND parent_id IS NOT NULL`
+	_, err := r.db.Exec(query, comment.Content, comment.Id, comment.Uid)
+	if err != nil {
+		return fmt.Errorf("failed to update comment: %w", err)
+	}
 	return nil
 }

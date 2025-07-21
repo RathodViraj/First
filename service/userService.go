@@ -32,3 +32,7 @@ func (s *UserService) UserFeed(id, offset int) ([]model.Post, error) {
 func (s *UserService) GetUserByEmail(UserEmail string) (*model.User, error) {
 	return s.Repo.GetByEmail(UserEmail)
 }
+
+func (s *UserService) UpdateUser(user *model.User) error {
+	return s.Repo.Update(user)
+}

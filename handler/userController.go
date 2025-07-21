@@ -4,6 +4,7 @@ import (
 	chachingservice "First/chachingService"
 	"First/model"
 	"First/service"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,13 +13,12 @@ import (
 )
 
 type UserHandler struct {
-	service *service.UserService
+	service     *service.UserService
+	postService *service.PostService
 }
 
-var p PostHandler
-
-func NewUserHandler(service *service.UserService) *UserHandler {
-	return &UserHandler{service}
+func NewUserHandler(service *service.UserService, postService *service.PostService) *UserHandler {
+	return &UserHandler{service: service, postService: postService}
 }
 
 func (h *UserHandler) CreateUser(ctx *gin.Context) {
@@ -39,11 +39,16 @@ func (h *UserHandler) CreateUser(ctx *gin.Context) {
 	}
 	user.Password = ""
 
+	if user.Role == "" {
+		user.Role = "user"
+	}
+
 	ctx.IndentedJSON(http.StatusCreated, user)
 }
 
 func (h *UserHandler) GetUser(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
+	log.Println(id)
 	if err != nil {
 		JSONError(ctx, http.StatusBadRequest, err.Error())
 		return
@@ -60,7 +65,7 @@ func (h *UserHandler) GetUser(ctx *gin.Context) {
 	user.Password = ""
 
 	if posts == nil {
-		posts, err = p.service.UserPosts(id)
+		posts, err = h.postService.UserPosts(id)
 		if err != nil {
 			msg := "can't fetch user's posts"
 			ctx.IndentedJSON(http.StatusOK, gin.H{
@@ -71,6 +76,8 @@ func (h *UserHandler) GetUser(ctx *gin.Context) {
 			return
 		}
 	}
+
+	chachingservice.ChachedUserProfile(user.Id, ctx, user, posts)
 
 	ctx.IndentedJSON(http.StatusOK, gin.H{
 		"user":  user,
@@ -107,6 +114,30 @@ func (h *UserHandler) DeleteUser(ctx *gin.Context) {
 
 	chachingservice.InvalUserIDateUserProfileChahe(userID, ctx)
 
+	ctx.Status(http.StatusOK)
+}
+
+func (h *UserHandler) UpdateUser(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		JSONError(ctx, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	var user model.User
+	if err := ctx.BindJSON(&user); err != nil {
+		JSONError(ctx, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+	user.Id = id
+	user.Password = "" // Do not allow password change
+
+	if err := h.service.UpdateUser(&user); err != nil {
+		JSONError(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	chachingservice.InvalUserIDateUserProfileChahe(id, ctx)
 	ctx.Status(http.StatusOK)
 }
 

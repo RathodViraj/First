@@ -20,3 +20,7 @@ func (s *CommentsService) GetComments(id int) ([]model.Post, error) {
 func (s *CommentsService) CreateComment(comment *model.Post) error {
 	return s.repo.AddComment(comment)
 }
+
+func (s *CommentsService) UpdateComment(comment *model.Post) error {
+	return s.repo.UpdateComment(comment)
+}

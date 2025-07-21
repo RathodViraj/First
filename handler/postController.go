@@ -125,3 +125,38 @@ func (h *PostHandler) RecentPosts(ctx *gin.Context) {
 
 	ctx.IndentedJSON(http.StatusOK, posts)
 }
+
+func (h *PostHandler) UpdatePost(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		JSONError(ctx, http.StatusBadRequest, "Invalid post ID")
+		return
+	}
+
+	uidVal, exists := ctx.Get("userID")
+	if !exists {
+		JSONError(ctx, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+	userID, ok := uidVal.(int)
+	if !ok {
+		JSONError(ctx, http.StatusInternalServerError, "Failed to extract user ID")
+		return
+	}
+
+	var post model.Post
+	if err := ctx.BindJSON(&post); err != nil {
+		JSONError(ctx, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+	post.Id = id
+	post.Uid = userID
+
+	if err := h.service.UpdatePost(&post); err != nil {
+		JSONError(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	chachingService.InvalUserIDateUserProfileChahe(userID, ctx)
+	ctx.Status(http.StatusOK)
+}

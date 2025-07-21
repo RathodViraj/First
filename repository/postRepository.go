@@ -13,6 +13,7 @@ type PostRepository interface {
 	GetByID(id int) (*model.Post, error)
 	GetRecentPosts(offset int) ([]model.Post, error)
 	GetAllUserPosts(id int) (*[]model.Post, error)
+	Update(post *model.Post) error
 }
 
 var ur userRepo
@@ -155,4 +156,13 @@ func (r *postRepo) GetAllUserPosts(id int) (*[]model.Post, error) {
 	}
 
 	return &posts, nil
+}
+
+func (r *postRepo) Update(post *model.Post) error {
+	query := `UPDATE posts SET content = ? WHERE id = ? AND uid = ?`
+	_, err := r.db.Exec(query, post.Content, post.Id, post.Uid)
+	if err != nil {
+		return fmt.Errorf("failed to update post: %w", err)
+	}
+	return nil
 }

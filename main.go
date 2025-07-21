@@ -49,7 +49,7 @@ func main() {
 	authService := service.NewAuthService(userService)
 	likeService := service.NewLikeService(likeRepo)
 
-	userHandler := handler.NewUserHandler(userService)
+	userHandler := handler.NewUserHandler(userService, postService)
 	postHandler := handler.NewPostHandler(postService, connectionService)
 	commentsHandler := handler.NewCommentsHandler(commentsService)
 	connectionHandler := handler.NewConnectionHandler(connectionService)
@@ -58,7 +58,7 @@ func main() {
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
-	// Add zap logger middleware
+	// Zap logger middleware
 	router.Use(func(c *gin.Context) {
 		start := time.Now()
 		c.Next()

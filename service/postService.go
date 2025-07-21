@@ -32,3 +32,7 @@ func (s *PostService) NewPosts(offset int) ([]model.Post, error) {
 func (s *PostService) UserPosts(id int) (*[]model.Post, error) {
 	return s.repo.GetAllUserPosts(id)
 }
+
+func (s *PostService) UpdatePost(post *model.Post) error {
+	return s.repo.Update(post)
+}
