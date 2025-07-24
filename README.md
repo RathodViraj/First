@@ -1,78 +1,112 @@
-# First
+````markdown
+# First:V1 – Mini Social Media Backend
 
-A mini social media backend API built with Go and Gin.
+A mini social media backend built in Go where users can register, login, post thoughts, follow others, and view a personalized feed. Redis is used for caching, and JWT ensures secure authentication.
 
-## Features
-- User registration and authentication (JWT)
-- Create, delete, and fetch posts
-- Like and unlike posts
-- Comment on posts
-- Follow and unfollow users
-- User feed and profile endpoints
-- Redis caching for performance
-- MySQL database support
+## 🔧 Tech Stack
 
-## Project Structure
+- **Language:** Go
+- **Database:** MySQL
+- **Cache:** Redis
+- **Auth:** JWT (JSON Web Tokens)
+- **API:** REST (built with net/http or Gin)
+- **Tools:** Postman, Git
+
+## ✨ Features
+
+- 🧑‍💻 **User Authentication**
+  - Registration and secure JWT-based login
+  - Role-based access supported (optional)
+
+- 📝 **Create Posts**
+  - Users can post their thoughts in text format
+
+- 👥 **Follow/Unfollow**
+  - Follow other users and build a social graph
+
+- 📰 **User Feed**
+  - Personalized post feed based on followed users
+  - Cached using Redis for better performance
+
+- ❤️ **Like System**
+  - Like and unlike any post
+
+- 🧠 **User Suggestions**
+  - Suggested users to follow based on mutual connections
+
+- ⚡ **Redis Caching**
+  - Profile and feed data cached to reduce DB hits
+
+## 🚀 Getting Started
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/RathodViraj/First.git
+cd First
+````
+
+### 2. Set up environment variables
+
+Create a `.env` file (or use environment export) with the following:
+
+```env
+DB_USER=root
+DB_PASS=yourpassword
+DB_NAME=socialmedia
+DB_HOST=localhost
+JWT_SECRET=your_jwt_secret
+REDIS_ADDR=localhost:6379
 ```
-First/
-  chachingService/      # Redis caching logic
-  db/                   # Database connection logic
-  handler/              # HTTP route handlers (controllers)
-  middleware/           # Gin middleware (e.g., auth)
-  model/                # Data models
-  repository/           # Data access layer
-  service/              # Business logic
-  main.go               # Application entry point
+
+### 3. Run the app
+
+```bash
+go run main.go
 ```
 
-## Setup
-1. **Clone the repository:**
-   ```sh
-   git clone github.com/RathodViraj/First/
-   cd First
-   ```
-2. **Configure your database:**
-   - Update your MySQL and Redis connection settings in `db/mysql.go` and `db/redis.go` as needed.
+Make sure Redis and MySQL servers are running locally.
 
-3. **Install dependencies:**
-   ```sh
-   go mod tidy
-   ```
+## 📁 Folder Structure
 
-4. **Run the application:**
-   ```sh
-   go run main.go
-   ```
-   The server will start on `:8080` by default.
+```
+.
+├── handler/        # HTTP handlers (controllers)
+├── service/        # Business logic
+├── repository/     # DB and cache operations
+├── model/          # Data structures (User, Post)
+├── utils/          # Utility functions (JWT, hashing)
+├── main.go         # Entry point
+└── go.mod
+```
 
-## API Endpoints
-- `POST   /register` — Register a new user
-- `POST   /login` — Login and receive JWT
-- `GET    /home` — Recent posts
-- `POST   /posts` — Create a post
-- `GET    /posts/:id` — Get a post
-- `DELETE /posts/:id` — Delete a post
-- `POST   /posts/:id/like` — Like a post
-- `DELETE /posts/:id/like` — Unlike a post
-- `GET    /posts/:id/likes` — Get users who liked a post
-- `GET    /posts/:id/comments` — Get comments for a post
-- `POST   /posts/:id/comments` — Add a comment
-- `GET    /users/:id` — Get user profile
-- `DELETE /users/:id` — Delete user
-- `GET    /users/:id/home` — Get user feed
-- `GET    /users/:id/followers` — Get followers
-- `GET    /users/:id/followings` — Get followings
-- `GET    /users/:id/mutual` — Get mutual connections
-- `POST   /follow/:follower_id/:following_id` — Follow a user
-- `DELETE /unfollow/:follower_id/:following_id` — Unfollow a user
+## 📬 API Endpoints (Sample)
 
-## Environment Variables
-- `JWT_SECRET` — Secret key for JWT signing (set in `main.go` or as an environment variable)
+* `POST /register` — Register user
+* `POST /login` — Login and get JWT
+* `POST /posts` — Create post
+* `GET /feed` — Get personalized feed
+* `POST /follow/{id}` — Follow a user
+* `POST /unfollow/{id}` — Unfollow a user
+* `GET /suggestions` — Get user suggestions
 
-## Notes
-- Make sure MySQL and Redis are running and accessible.
-- For production, set `GIN_MODE=release`.
+## 📌 Future Improvements
+
+* Add comments and notifications
+* Rate-limiting using Redis
+* Image upload for posts
+* GraphQL version (in progress)
 
 ---
 
-**Contributions welcome!** 
+## 👨‍💻 Author
+
+**Viraj Rathod**
+Backend Developer | [LinkedIn](https://linkedin.com/in/virajrathod) | [GitHub](https://github.com/RathodViraj)
+
+```
+
+---
+
+Let me know if you'd like a shorter version too, or a README template for your next project. Once you push this to GitHub, your project will look *much more professional* to recruiters and collaborators.
+```
