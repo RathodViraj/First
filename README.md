@@ -61,9 +61,9 @@ REDIS_ADDR=localhost:6379
 
 # 3. Run the app
 
-```bash
+bash
 go run main.go
-```
+
 
 Make sure Redis and MySQL servers are running locally.
 
