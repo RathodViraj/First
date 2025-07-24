@@ -102,7 +102,7 @@ Make sure Redis and MySQL servers are running locally.
  👨‍💻 Author
 
 Viraj Rathod
-Backend Developer | [LinkedIn](https://linkedin.com/in/virajrathod) | [GitHub](https://github.com/RathodViraj)
+Backend Developer | [LinkedIn](www.linkedin.com/in/viraj-rathod-058ba4280) | [GitHub](github.com/RathodViraj)
 
 ```
 
