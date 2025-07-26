@@ -1,4 +1,4 @@
-package chachingservice
+package cachingservice
 
 import (
 	"First/model"
@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func GetChachedUserProfile(userID int, ctx context.Context) (*model.User, *[]model.Post) {
+func GetCachedUserProfile(userID int, ctx context.Context) (*model.User, *[]model.Post) {
 	var (
 		user  *model.User
 		posts *[]model.Post
@@ -36,7 +36,7 @@ func GetChachedUserProfile(userID int, ctx context.Context) (*model.User, *[]mod
 	return user, posts
 }
 
-func ChachedUserProfile(UserID int, ctx context.Context, user *model.User, posts *[]model.Post) {
+func CachedUserProfile(UserID int, ctx context.Context, user *model.User, posts *[]model.Post) {
 	ukey := fmt.Sprintf("user:%d", UserID)
 	if data, err := json.Marshal(user); err == nil {
 		RDB.Set(ctx, ukey, data, time.Minute*2)
@@ -47,14 +47,14 @@ func ChachedUserProfile(UserID int, ctx context.Context, user *model.User, posts
 	}
 }
 
-func InvalUserIDateUserProfileChahe(UserID int, ctx context.Context) {
+func InvalidateUserProfileCache(UserID int, ctx context.Context) {
 	ukey := fmt.Sprintf("user:*:%d", UserID)
 	if err := RDB.Del(ctx, ukey).Err(); err != nil {
 		log.Println(err.Error())
 	}
 }
 
-func GetChachedUserFeed(userID, page int, ctx context.Context) *[]model.Post {
+func GetCachedUserFeed(userID, page int, ctx context.Context) *[]model.Post {
 	var feed *[]model.Post
 
 	key := fmt.Sprintf("home:user:%d:%d", userID, page)
@@ -69,14 +69,14 @@ func GetChachedUserFeed(userID, page int, ctx context.Context) *[]model.Post {
 	return feed
 }
 
-func ChachedUserFeed(userID, page int, ctx context.Context, posts []model.Post) {
+func CachedUserFeed(userID, page int, ctx context.Context, posts []model.Post) {
 	key := fmt.Sprintf("user:home:%d:%d", userID, page)
 	if data, err := json.Marshal(posts); err == nil {
 		RDB.Set(ctx, key, data, time.Minute*2)
 	}
 }
 
-func InvalidateUserFeedChahe(userID int, ctx context.Context) {
+func InvalidateUserFeedCache(userID int, ctx context.Context) {
 	ukey := fmt.Sprintf("user:home:%d:*", userID)
 	if err := RDB.Del(ctx, ukey).Err(); err != nil {
 		log.Println(err.Error())

@@ -1,7 +1,7 @@
 package handler
 
 import (
-	chachingservice "First/chachingservice"
+	cachingservice "First/cachingservice"
 	"First/service"
 	"net/http"
 	"strconv"
@@ -35,9 +35,9 @@ func (h *ConnectionHandler) FollowUser(ctx *gin.Context) {
 		return
 	}
 
-	chachingservice.InvalidateUserFollowersCache(ctx, followingID)
-	chachingservice.InvalidateUserFollowingsCache(ctx, followerID)
-	chachingservice.InvalidatemutualCache(ctx, followerID)
+	cachingservice.InvalidateUserFollowersCache(ctx, followingID)
+	cachingservice.InvalidateUserFollowingsCache(ctx, followerID)
+	cachingservice.InvalidatemutualCache(ctx, followerID)
 
 	ctx.Status(http.StatusCreated)
 }
@@ -60,9 +60,9 @@ func (h *ConnectionHandler) UnfollowUser(ctx *gin.Context) {
 		return
 	}
 
-	chachingservice.InvalidateUserFollowersCache(ctx, followingID)
-	chachingservice.InvalidateUserFollowingsCache(ctx, followerID)
-	chachingservice.InvalidatemutualCache(ctx, followerID)
+	cachingservice.InvalidateUserFollowersCache(ctx, followingID)
+	cachingservice.InvalidateUserFollowingsCache(ctx, followerID)
+	cachingservice.InvalidatemutualCache(ctx, followerID)
 
 	ctx.Status(http.StatusOK)
 }
@@ -86,7 +86,7 @@ func (h *ConnectionHandler) GetFollowers(ctx *gin.Context) {
 		return
 	}
 
-	if followers := chachingservice.GetFollowersChached(userID, ctx); len(followers) > 0 {
+	if followers := cachingservice.GetFollowersCached(userID, ctx); len(followers) > 0 {
 		ctx.IndentedJSON(http.StatusOK, followers)
 		return
 	}
@@ -97,7 +97,7 @@ func (h *ConnectionHandler) GetFollowers(ctx *gin.Context) {
 		return
 	}
 
-	chachingservice.ChachedFollowers(userID, followers, ctx)
+	cachingservice.CachedFollowers(userID, followers, ctx)
 
 	ctx.IndentedJSON(http.StatusOK, followers)
 }
@@ -119,7 +119,7 @@ func (h *ConnectionHandler) GetFollowings(ctx *gin.Context) {
 		return
 	}
 
-	if followings := chachingservice.GetFollowingsChached(userID, ctx); len(followings) > 0 {
+	if followings := cachingservice.GetFollowingsCached(userID, ctx); len(followings) > 0 {
 		ctx.IndentedJSON(http.StatusOK, followings)
 		return
 	}
@@ -130,7 +130,7 @@ func (h *ConnectionHandler) GetFollowings(ctx *gin.Context) {
 		return
 	}
 
-	chachingservice.ChachedFollowings(userID, followings, ctx)
+	cachingservice.CachedFollowings(userID, followings, ctx)
 
 	ctx.IndentedJSON(http.StatusOK, followings)
 }
@@ -153,7 +153,7 @@ func (h *ConnectionHandler) GetMutual(ctx *gin.Context) {
 	}
 	id = userID
 
-	if mutual := chachingservice.GetFollowingsChached(userID, ctx); len(mutual) > 0 {
+	if mutual := cachingservice.GetFollowingsCached(userID, ctx); len(mutual) > 0 {
 		ctx.IndentedJSON(http.StatusOK, mutual)
 		return
 	}
@@ -164,7 +164,7 @@ func (h *ConnectionHandler) GetMutual(ctx *gin.Context) {
 		return
 	}
 
-	chachingservice.ChachedMutuals(userID, mutual, ctx)
+	cachingservice.CachedMutuals(userID, mutual, ctx)
 
 	ctx.IndentedJSON(http.StatusOK, mutual)
 }

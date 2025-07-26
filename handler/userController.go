@@ -1,7 +1,7 @@
 package handler
 
 import (
-	chachingservice "First/chachingservice"
+	"First/cachingservice"
 	"First/model"
 	"First/service"
 	"log"
@@ -54,7 +54,7 @@ func (h *UserHandler) GetUser(ctx *gin.Context) {
 		return
 	}
 
-	user, posts := chachingservice.GetChachedUserProfile(id, ctx)
+	user, posts := cachingservice.GetCachedUserProfile(id, ctx)
 	if user == nil {
 		user, err = h.service.GetUser(id)
 		if err != nil {
@@ -77,7 +77,7 @@ func (h *UserHandler) GetUser(ctx *gin.Context) {
 		}
 	}
 
-	chachingservice.ChachedUserProfile(user.Id, ctx, user, posts)
+	cachingservice.CachedUserProfile(user.Id, ctx, user, posts)
 
 	ctx.IndentedJSON(http.StatusOK, gin.H{
 		"user":  user,
@@ -112,7 +112,7 @@ func (h *UserHandler) DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	chachingservice.InvalUserIDateUserProfileChahe(userID, ctx)
+	cachingservice.InvalidateUserProfileCache(userID, ctx)
 
 	ctx.Status(http.StatusOK)
 }
@@ -137,7 +137,7 @@ func (h *UserHandler) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	chachingservice.InvalUserIDateUserProfileChahe(id, ctx)
+	cachingservice.InvalidateUserProfileCache(id, ctx)
 	ctx.Status(http.StatusOK)
 }
 
@@ -171,7 +171,7 @@ func (h *UserHandler) GetFeed(ctx *gin.Context) {
 	}
 	offset := (page - 1) * 10
 
-	if feed := chachingservice.GetChachedUserFeed(userID, page, ctx); feed != nil {
+	if feed := cachingservice.GetCachedUserFeed(userID, page, ctx); feed != nil {
 		ctx.IndentedJSON(http.StatusOK, feed)
 		return
 	}
@@ -182,7 +182,7 @@ func (h *UserHandler) GetFeed(ctx *gin.Context) {
 		return
 	}
 
-	chachingservice.ChachedUserFeed(userID, page, ctx, feed)
+	cachingservice.CachedUserFeed(userID, page, ctx, feed)
 
 	ctx.IndentedJSON(http.StatusOK, feed)
 }

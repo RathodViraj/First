@@ -1,13 +1,17 @@
 package handler
 
 import (
-	chachingService "First/chachingservice"
+	cachingservice "First/cachingservice"
 	"First/model"
 	"First/service"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+)
+
+var (
+	u UserHandler
 )
 
 type PostHandler struct {
@@ -52,7 +56,7 @@ func (h *PostHandler) CreatePost(ctx *gin.Context) {
 	followers, err := h.connectionService.GetFollowers(userID)
 	if err == nil {
 		for _, user := range followers {
-			chachingService.InvalidateUserFeedChahe(user.Id, ctx)
+			cachingservice.InvalidateUserFeedCache(user.Id, ctx)
 		}
 	}
 
@@ -85,7 +89,7 @@ func (h *PostHandler) DeletePost(ctx *gin.Context) {
 	followers, err := h.connectionService.GetFollowers(userID)
 	if err == nil {
 		for _, user := range followers {
-			chachingService.InvalidateUserFeedChahe(user.Id, ctx)
+			cachingservice.InvalidateUserFeedCache(user.Id, ctx)
 		}
 	}
 
@@ -157,6 +161,6 @@ func (h *PostHandler) UpdatePost(ctx *gin.Context) {
 		return
 	}
 
-	chachingService.InvalUserIDateUserProfileChahe(userID, ctx)
+	cachingservice.InvalidateUserProfileCache(userID, ctx)
 	ctx.Status(http.StatusOK)
 }

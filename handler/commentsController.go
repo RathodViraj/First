@@ -1,7 +1,6 @@
 package handler
 
 import (
-	chachingservice "First/chachingservice"
 	"First/model"
 	"First/service"
 	"net/http"
@@ -112,6 +111,5 @@ func (h *CommentsHandler) UpdateComment(ctx *gin.Context) {
 		return
 	}
 
-	chachingservice.InvalUserIDateUserProfileChahe(userID, ctx)
 	ctx.Status(http.StatusOK)
 }

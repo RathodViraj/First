@@ -1,7 +1,7 @@
 package main
 
 import (
-	chachingservice "First/chachingservice"
+	cachingservice "First/cachingservice"
 	"First/db"
 	"First/handler"
 	"First/middleware"
@@ -44,7 +44,7 @@ func main() {
 
 	RDB := db.InitRedis()
 	defer RDB.Close()
-	chachingservice.SetRedies(RDB)
+	cachingservice.SetRedies(RDB)
 
 	userRepo := repository.NewUserRepository(dbConn)
 	postRepo := repository.NewPostRepository(dbConn)

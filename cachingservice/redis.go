@@ -1,4 +1,4 @@
-package chachingservice
+package cachingservice
 
 import (
 	"github.com/redis/go-redis/v9"

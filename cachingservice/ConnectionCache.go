@@ -1,4 +1,4 @@
-package chachingservice
+package cachingservice
 
 import (
 	"First/model"
@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func GetFollowersChached(userID int, ctx context.Context) []model.User {
+func GetFollowersCached(userID int, ctx context.Context) []model.User {
 	key := fmt.Sprintf("user:followers:%d", userID)
 	data, err := RDB.Get(ctx, key).Result()
 	if err == nil && data != "" {
@@ -22,7 +22,7 @@ func GetFollowersChached(userID int, ctx context.Context) []model.User {
 	return []model.User{}
 }
 
-func ChachedFollowers(userID int, followers []model.User, ctx context.Context) {
+func CachedFollowers(userID int, followers []model.User, ctx context.Context) {
 	key := fmt.Sprintf("user:followers:%d", userID)
 	if data, err := json.Marshal(followers); err == nil {
 		RDB.Set(ctx, key, data, time.Minute*2)
@@ -37,7 +37,7 @@ func InvalidateUserFollowersCache(ctx context.Context, userId int) {
 	}
 }
 
-func GetFollowingsChached(userID int, ctx context.Context) []model.User {
+func GetFollowingsCached(userID int, ctx context.Context) []model.User {
 	key := fmt.Sprintf("user:followings:%d", userID)
 	data, err := RDB.Get(ctx, key).Result()
 	if err == nil && data != "" {
@@ -50,7 +50,7 @@ func GetFollowingsChached(userID int, ctx context.Context) []model.User {
 	return []model.User{}
 }
 
-func ChachedFollowings(userID int, followings []model.User, ctx context.Context) {
+func CachedFollowings(userID int, followings []model.User, ctx context.Context) {
 	key := fmt.Sprintf("user:followings:%d", userID)
 	if data, err := json.Marshal(followings); err == nil {
 		RDB.Set(ctx, key, data, time.Minute*2)
@@ -78,7 +78,7 @@ func GetChahcedmutual(userID int, ctx context.Context) []model.User {
 	return []model.User{}
 }
 
-func ChachedMutuals(userID int, mutuals []model.User, ctx context.Context) {
+func CachedMutuals(userID int, mutuals []model.User, ctx context.Context) {
 	key := fmt.Sprintf("user:mutual:%d", userID)
 	if data, err := json.Marshal(mutuals); err == nil {
 		RDB.Set(ctx, key, data, time.Minute*2)
