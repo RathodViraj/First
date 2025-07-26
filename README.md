@@ -106,7 +106,6 @@ Backend Developer | [LinkedIn](www.linkedin.com/in/viraj-rathod-058ba4280) | [Gi
 
 ```
 
----
-
+```
 Let me know if you'd like a shorter version too, or a README template for your next project. Once you push this to GitHub, your project will look much more professional to recruiters and collaborators.
 ```
