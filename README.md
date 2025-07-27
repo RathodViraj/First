@@ -47,6 +47,7 @@ A mini social media backend built in Go where users can register, login, post th
 ```bash
 git clone https://github.com/RathodViraj/First.git
 cd First
+```
 ````
 
 # 2. Set up environment variables
