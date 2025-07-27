@@ -51,6 +51,7 @@ func main() {
 	commentRepo := repository.NewCommentRepo(dbConn)
 	connectionRepo := repository.NewConnectioRepo(dbConn)
 	likeRepo := repository.NewLikeRepo(dbConn)
+	searchRepo := repository.NewSearchRepo(dbConn)
 
 	userService := service.NewUserService(userRepo)
 	postService := service.NewPostService(postRepo)
@@ -58,6 +59,7 @@ func main() {
 	connectionService := service.NewConnectionService(connectionRepo)
 	authService := service.NewAuthService(userService)
 	likeService := service.NewLikeService(likeRepo)
+	searchService := service.NewSearchService(searchRepo)
 
 	userHandler := handler.NewUserHandler(userService, postService)
 	postHandler := handler.NewPostHandler(postService, connectionService)
@@ -65,9 +67,11 @@ func main() {
 	connectionHandler := handler.NewConnectionHandler(connectionService)
 	authHandler := handler.NewAuthHandler(authService)
 	likeHandler := handler.NewLikeHandler(likeService)
+	searchHandler := handler.NewSearchHandler(searchService)
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
+
 	// Zap logger middleware
 	router.Use(func(c *gin.Context) {
 		start := time.Now()
@@ -118,6 +122,10 @@ func main() {
 	router.GET("/users/:id/mutual", connectionHandler.GetMutual)
 	router.POST("/follow/:follower_id/:following_id", connectionHandler.FollowUser)
 	router.DELETE("/unfollow/:follower_id/:following_id", connectionHandler.UnfollowUser)
+
+	// Search routes
+	router.GET("/search/users", searchHandler.SearchUser)
+	router.GET("/search/posts", searchHandler.SearchPost)
 
 	srv := &http.Server{
 		Addr:    ":8080",
