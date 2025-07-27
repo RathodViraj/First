@@ -37,6 +37,9 @@ A mini social media backend built in Go where users can register, login, post th
 - ⚡ Redis Caching
   - Profile and feed data cached to reduce DB hits
 
+- 🔍 Search user or post
+   - One can search user or post
+
  🚀 Getting Started
 
 # 1. Clone the repo
