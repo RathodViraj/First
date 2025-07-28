@@ -2,24 +2,29 @@ package repository
 
 import (
 	"First/model"
+	"context"
 	"database/sql"
 	"fmt"
+	"log"
+
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 )
 
 type ConnectionRepository interface {
 	CreateConnection(conn *model.Connection) error
 	DeleteConnection(followerID, followingID int) error
-	GetFollowers(userID int) ([]model.User, error)
-	GetFollowings(userID int) ([]model.User, error)
-	GetMutual(id int) ([]model.User, error)
+	GetFollowers(userIDs []int) []model.User
+	GetFollowings(userIDs []int) []model.User
+	GetMutual(mutualIDs []int) ([]model.User, error)
 }
 
 type connectionRepo struct {
-	db *sql.DB
+	db    *sql.DB
+	graph Graph
 }
 
-func NewConnectioRepo(db *sql.DB) *connectionRepo {
-	return &connectionRepo{db}
+func NewConnectionRepo(db *sql.DB, graph Graph) *connectionRepo {
+	return &connectionRepo{db: db, graph: graph}
 }
 
 func (r *connectionRepo) CreateConnection(conn *model.Connection) error {
@@ -27,104 +32,89 @@ func (r *connectionRepo) CreateConnection(conn *model.Connection) error {
 		return fmt.Errorf("cannot follow yourself")
 	}
 
-	query := `
-        INSERT INTO connections (follower_id, following_id) 
-        VALUES (?, ?)`
-	_, err := r.db.Exec(query, conn.FollowerID, conn.FollowingID)
-	if err != nil {
-		return fmt.Errorf("failed to create connection: %w", err)
-	}
-	return nil
+	session := r.graph.(*graph).driver.NewSession(context.Background(), neo4j.SessionConfig{})
+	defer session.Close(context.Background())
+
+	_, err := session.ExecuteWrite(context.Background(), func(tx neo4j.ManagedTransaction) (any, error) {
+		query := `MATCH (follower:User {id: $followerID}), (following:User {id: $followingID})
+		CREATE (follower)-[:FOLLOWS]->(following)`
+		params := map[string]any{
+			"followerID":  conn.FollowerID,
+			"followingID": conn.FollowingID,
+		}
+		_, err := tx.Run(context.Background(), query, params)
+		return nil, err
+	})
+	return err
 }
 
 func (r *connectionRepo) DeleteConnection(followerID, followingID int) error {
-	res, err := r.db.Exec(
-		"DELETE FROM connections WHERE follower_id = ? AND following_id = ?",
-		followerID, followingID,
-	)
-	if err != nil {
-		return fmt.Errorf("database error: %w", err)
-	}
+	session := r.graph.(*graph).driver.NewSession(context.Background(), neo4j.SessionConfig{})
+	defer session.Close(context.Background())
 
-	if rows, _ := res.RowsAffected(); rows == 0 {
-		return fmt.Errorf("connection not found")
-	}
-	return nil
+	_, err := session.ExecuteWrite(context.Background(), func(tx neo4j.ManagedTransaction) (any, error) {
+		query := `MATCH (follower:User {id: $followerID})-[r:FOLLOWS]->(following:User {id: $followingID}) DELETE r`
+		params := map[string]any{
+			"followerID":  followerID,
+			"followingID": followingID,
+		}
+		_, err := tx.Run(context.Background(), query, params)
+		return nil, err
+	})
+
+	return err
 }
 
-func (r *connectionRepo) GetFollowers(userID int) ([]model.User, error) {
-	query := `SELECT u.id, u.name, u.email, u.created_at 
-        FROM users u
-        JOIN connections c ON u.id = c.follower_id
-        WHERE c.following_id = ?`
-
-	rows, err := r.db.Query(query, userID)
-	if err != nil {
-		return nil, fmt.Errorf("database error: %w", err)
-	}
-	defer rows.Close()
-
+func (r *connectionRepo) GetFollowers(userIDs []int) []model.User {
 	var followers []model.User
-	for rows.Next() {
+
+	for _, id := range userIDs {
+		query := `SELECT id, name, email, created_at FROM users WHERE id = ?`
+		row := r.db.QueryRow(query, id)
+
 		var u model.User
-		if err := rows.Scan(&u.Id, &u.Name, &u.Email, &u.CreatedAt); err != nil {
-			return nil, fmt.Errorf("scan error: %w", err)
+		if err := row.Scan(&u.Id, &u.Name, &u.Email, &u.CreatedAt); err != nil {
+			log.Println(err)
+			continue
 		}
 		followers = append(followers, u)
 	}
 
-	return followers, nil
+	return followers
 }
 
-func (r *connectionRepo) GetFollowings(userID int) ([]model.User, error) {
-	query := `
-        SELECT u.id, u.name, u.email, u.created_at 
-        FROM users u
-        JOIN connections c ON u.id = c.following_id
-        WHERE c.follower_id = ?`
-
-	rows, err := r.db.Query(query, userID)
-	if err != nil {
-		return nil, fmt.Errorf("database error: %w", err)
-	}
-	defer rows.Close()
-
+func (r *connectionRepo) GetFollowings(userIDs []int) []model.User {
 	var followings []model.User
-	for rows.Next() {
+
+	for _, id := range userIDs {
+		query := `SELECT id, name, email, created_at FROM users WHERE id = ?`
+		row := r.db.QueryRow(query, id)
+
 		var u model.User
-		if err := rows.Scan(&u.Id, &u.Name, &u.Email, &u.CreatedAt); err != nil {
-			return nil, fmt.Errorf("scan error: %w", err)
+		if err := row.Scan(&u.Id, &u.Name, &u.Email, &u.CreatedAt); err != nil {
+			log.Println(err)
+			continue
 		}
 		followings = append(followings, u)
 	}
-	return followings, nil
+
+	return followings
 }
 
-func (r *connectionRepo) GetMutual(userID int) ([]model.User, error) {
-	query := `
-		SELECT u.id, u.name, COUNT(*) AS mutual_count
-		FROM users u
-		JOIN connections c1 ON u.id = c1.following_id
-		JOIN connections c2 ON c1.following_id = c2.follower_id
-		WHERE c1.follower_id = ? AND c2.following_id = ? AND u.id != ?
-		GROUP BY u.id, u.name
-		ORDER BY mutual_count DESC
-	`
+func (r *connectionRepo) GetMutual(mutualIDs []int) ([]model.User, error) {
+	var mutuals []model.User
 
-	rows, err := r.db.Query(query, userID, userID, userID)
-	if err != nil {
-		return []model.User{}, nil
-	}
+	for _, id := range mutualIDs {
+		query := `SELECT id, name, email, created_at FROM users WHERE id = ?`
+		row := r.db.QueryRow(query, id)
 
-	var mutual []model.User
-	for rows.Next() {
 		var u model.User
-		if err = rows.Scan(&u.Id, &u.Name); err != nil {
-			return []model.User{}, nil
+		if err := row.Scan(&u.Id, &u.Name, &u.Email, &u.CreatedAt); err != nil {
+			log.Println(err)
+			continue
 		}
-
-		mutual = append(mutual, u)
+		mutuals = append(mutuals, u)
 	}
 
-	return mutual, nil
+	return mutuals, nil
 }

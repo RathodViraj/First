@@ -30,6 +30,18 @@ func (h *ConnectionHandler) FollowUser(ctx *gin.Context) {
 		return
 	}
 
+	uidVal, exists := ctx.Get("userID")
+	if !exists {
+		JSONError(ctx, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+	userID, ok := uidVal.(int)
+	if !ok {
+		JSONError(ctx, http.StatusInternalServerError, "Failed to extract user ID")
+		return
+	}
+	followerID = userID
+
 	if err := h.service.Follow(followerID, followingID); err != nil {
 		JSONError(ctx, http.StatusBadRequest, err.Error())
 		return
@@ -54,6 +66,18 @@ func (h *ConnectionHandler) UnfollowUser(ctx *gin.Context) {
 		JSONError(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
+
+	uidVal, exists := ctx.Get("userID")
+	if !exists {
+		JSONError(ctx, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+	userID, ok := uidVal.(int)
+	if !ok {
+		JSONError(ctx, http.StatusInternalServerError, "Failed to extract user ID")
+		return
+	}
+	followerID = userID
 
 	if err := h.service.Unfollow(followerID, followingID); err != nil {
 		JSONError(ctx, http.StatusBadRequest, err.Error())

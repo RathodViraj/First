@@ -77,7 +77,7 @@ func (h *AuthHandler) Register(ctx *gin.Context) {
 	}
 	user.Password = hashedPassword
 
-	if err := h.authService.UserSrv.RegisterUser(&user); err != nil {
+	if err := h.authService.UserSrv.RegisterUser(user); err != nil {
 		log.Printf("Registration failed: %v", err)
 		JSONError(ctx, http.StatusInternalServerError, err.Error())
 		return

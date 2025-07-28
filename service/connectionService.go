@@ -6,11 +6,12 @@ import (
 )
 
 type ConnectionService struct {
-	repo repository.ConnectionRepository
+	repo  repository.ConnectionRepository
+	graph repository.Graph
 }
 
-func NewConnectionService(repo repository.ConnectionRepository) *ConnectionService {
-	return &ConnectionService{repo}
+func NewConnectionService(repo repository.ConnectionRepository, graph repository.Graph) *ConnectionService {
+	return &ConnectionService{repo: repo, graph: graph}
 }
 
 func (s *ConnectionService) Follow(followerID, followingID int) error {
@@ -25,13 +26,28 @@ func (s *ConnectionService) Unfollow(followerID, followingID int) error {
 }
 
 func (s *ConnectionService) GetFollowers(userID int) ([]model.User, error) {
-	return s.repo.GetFollowers(userID)
+	followerIDs, err := s.graph.GetFollowersIDs(userID)
+	if err != nil {
+		return []model.User{}, err
+	}
+
+	return s.repo.GetFollowers(followerIDs), nil
 }
 
 func (s *ConnectionService) GetFollowings(userID int) ([]model.User, error) {
-	return s.repo.GetFollowings(userID)
+	followingIDs, err := s.graph.GetFollowingsIDs(userID)
+	if err != nil {
+		return []model.User{}, err
+	}
+
+	return s.repo.GetFollowings(followingIDs), nil
 }
 
-func (s *ConnectionService) Mutual(id int) ([]model.User, error) {
-	return s.repo.GetMutual(id)
+func (s *ConnectionService) Mutual(userID int) ([]model.User, error) {
+	mutualIDs, err := s.graph.GetMutualIDs(userID)
+	if err != nil {
+		return []model.User{}, err
+	}
+
+	return s.repo.GetMutual(mutualIDs)
 }

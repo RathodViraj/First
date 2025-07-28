@@ -65,7 +65,6 @@ func (s *AuthService) ValidateToken(tokenStr string) (int, string, error) {
 }
 
 func (s *AuthService) Authenticate(login *model.LoginRequest) (*model.User, error) {
-
 	user, err := s.UserSrv.GetUserByEmail(login.Email)
 	if err != nil {
 		log.Printf("Authentication failed for %s: %v", login.Email, err)

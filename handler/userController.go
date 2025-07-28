@@ -33,7 +33,7 @@ func (h *UserHandler) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.service.RegisterUser(&user); err != nil {
+	if err := h.service.RegisterUser(user); err != nil {
 		JSONError(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -176,7 +176,7 @@ func (h *UserHandler) GetFeed(ctx *gin.Context) {
 		return
 	}
 
-	feed, err := h.service.UserFeed(userID, offset)
+	feed, err := h.service.GetUserFeed(userID, offset)
 	if err != nil {
 		JSONError(ctx, http.StatusBadRequest, err.Error())
 		return

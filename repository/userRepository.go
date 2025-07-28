@@ -5,16 +5,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 )
 
 type UserRepository interface {
 	GetByEmail(email string) (*model.User, error)
 	GetByID(id int) (*model.User, error)
-	Create(user *model.User) error
+	CreateUserSQL(user *model.User) error
 	Delete(id, userID int, isAdmin bool) error
-	GetUserFeed(id, offset int) ([]model.Post, error)
+	DeleteUserSQL(id int) error
+	GetUserFeed(userID, offset int, graph Graph) ([]model.Post, error)
 	Update(user *model.User) error
 }
 
@@ -27,7 +27,6 @@ func NewUserRepository(db *sql.DB) UserRepository {
 }
 
 func (r *userRepo) GetByEmail(email string) (*model.User, error) {
-	// Normalize email to lowercase and trim spaces
 	email = strings.TrimSpace(strings.ToLower(email))
 
 	query := `SELECT id, name, email, password, created_at 
@@ -40,8 +39,6 @@ func (r *userRepo) GetByEmail(email string) (*model.User, error) {
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			// Log the email that wasn't found for debugging
-			log.Printf("User not found for email: %s", email)
 			return nil, fmt.Errorf("user not found")
 		}
 		return nil, fmt.Errorf("database error: %w", err)
@@ -66,7 +63,7 @@ func (r *userRepo) GetByID(id int) (*model.User, error) {
 	return &user, nil
 }
 
-func (r *userRepo) Create(user *model.User) error {
+func (r *userRepo) CreateUserSQL(user *model.User) error {
 	query := `INSERT INTO users (name, email, password) VALUES (?, ?, ?)`
 	res, err := r.db.Exec(query, user.Name, user.Email, user.Password)
 	if err != nil {
@@ -81,18 +78,30 @@ func (r *userRepo) Create(user *model.User) error {
 	return nil
 }
 
+func (r *userRepo) DeleteUserSQL(id int) error {
+	query := `DELETE FROM users WHERE id = ?`
+	res, err := r.db.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		return fmt.Errorf("user not found")
+	}
+	return nil
+}
+
 func (r *userRepo) Delete(id, userID int, isAdmin bool) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback() // Safe to call if tx.Commit() succeeds
+	defer tx.Rollback()
 
 	if id != userID && !isAdmin {
 		return fmt.Errorf("Sorry your not an Admin.\nOnly Admin can delete other's account.")
 	}
 
-	// Delete connections first to avoid FK violations
 	if _, err = tx.Exec("DELETE FROM connections WHERE follower_id = ? OR following_id = ?", id, id); err != nil {
 		return fmt.Errorf("failed to delete user connections: %w", err)
 	}
@@ -109,16 +118,32 @@ func (r *userRepo) Delete(id, userID int, isAdmin bool) error {
 	return tx.Commit()
 }
 
-func (r *userRepo) GetUserFeed(id, offset int) ([]model.Post, error) {
+func (r *userRepo) GetUserFeed(userID, offset int, graph Graph) ([]model.Post, error) {
+	followingIDs, err := graph.GetFollowingsIDs(userID)
+	if err != nil {
+		return nil, fmt.Errorf("neo4j error: %w", err)
+	}
+
+	if len(followingIDs) == 0 {
+		return []model.Post{}, nil
+	}
+
 	query := `
 	SELECT p.id, p.uid, p.content, p.likes, p.parent_id, p.created_at
 	FROM posts p
-	JOIN connections c ON p.uid = c.following_id
-	WHERE c.follower_id = ? 
+	WHERE p.uid IN (?
+	` + strings.Repeat(",?", len(followingIDs)-1) + `)
 	ORDER BY p.created_at DESC
 	LIMIT 10 OFFSET ?
 	`
-	rows, err := r.db.Query(query, id, offset)
+
+	args := make([]any, len(followingIDs)+1)
+	for i, id := range followingIDs {
+		args[i] = id
+	}
+	args[len(args)-1] = offset
+
+	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("database error: %w", err)
 	}
@@ -132,6 +157,7 @@ func (r *userRepo) GetUserFeed(id, offset int) ([]model.Post, error) {
 		}
 		feed = append(feed, p)
 	}
+
 	return feed, nil
 }
 

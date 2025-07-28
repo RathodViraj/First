@@ -3,6 +3,7 @@ package main
 import (
 	cachingservice "First/cachingservice"
 	"First/db"
+	"First/graph"
 	"First/handler"
 	"First/middleware"
 	"First/repository"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/neo4j/neo4j-go-driver/v5/neo4j"
 	"go.uber.org/zap"
 )
 
@@ -46,17 +48,42 @@ func main() {
 	defer RDB.Close()
 	cachingservice.SetRedies(RDB)
 
+	graph.InitNeo4j()
+	defer graph.Driver.Close(context.Background())
+
+	session := graph.Driver.NewSession(context.Background(), neo4j.SessionConfig{})
+	defer session.Close(context.Background())
+
+	_, err = session.ExecuteRead(context.Background(), func(tx neo4j.ManagedTransaction) (any, error) {
+		res, err := tx.Run(context.Background(), `RETURN "Connected Successfully!"`, nil)
+		if err != nil {
+			return nil, err
+		}
+		if res.Next(context.Background()) {
+			return res.Record().Values[0], nil
+		}
+		return nil, res.Err()
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	// fmt.Println(result)
+
 	userRepo := repository.NewUserRepository(dbConn)
 	postRepo := repository.NewPostRepository(dbConn)
 	commentRepo := repository.NewCommentRepo(dbConn)
-	connectionRepo := repository.NewConnectioRepo(dbConn)
+	graphRepo := repository.NewGraph(graph.Driver)
+	connectionRepo := repository.NewConnectionRepo(dbConn, graphRepo)
 	likeRepo := repository.NewLikeRepo(dbConn)
 	searchRepo := repository.NewSearchRepo(dbConn)
 
-	userService := service.NewUserService(userRepo)
+	g := graph.Graph{}
+
+	userService := service.NewUserService(userRepo, g, graphRepo)
 	postService := service.NewPostService(postRepo)
 	commentsService := service.NewCommentsService(commentRepo)
-	connectionService := service.NewConnectionService(connectionRepo)
+	connectionService := service.NewConnectionService(connectionRepo, graphRepo)
 	authService := service.NewAuthService(userService)
 	likeService := service.NewLikeService(likeRepo)
 	searchService := service.NewSearchService(searchRepo)
