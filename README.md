@@ -78,9 +78,7 @@ REDIS_ADDR=localhost:6379
 ```
 
 3. Run the Application
-
 ```
-bash
 go run main.go
 ```
 
