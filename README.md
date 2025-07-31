@@ -1,115 +1,142 @@
 ````markdown
-# First:V1 – Mini Social Media Backend
+First:v2 – Mini Social Media Backend
 
-A mini social media backend built in Go where users can register, login, post thoughts, follow others, and view a personalized feed. Redis is used for caching, and JWT ensures secure authentication.
+A mini social media backend built in Go where users can register, login, post thoughts, follow others, and view a personalized feed. It uses Neo4j to manage relationships and feed generation, Redis for caching, JWT for authentication, and WebSocket for real-time notifications.
 
- 🔧 Tech Stack
+---
+
+🔧 Tech Stack
 
 - Language: Go
-- Database: MySQL
+- Databases: MySQL, Neo4j (Graph DB)
 - Cache: Redis
 - Auth: JWT (JSON Web Tokens)
-- API: REST (built with net/http or Gin)
+- API: REST (net/http or Gin)
+- Real-time: WebSocket (Notifications)
 - Tools: Postman, Git
 
- ✨ Features
+---
 
-- 🧑‍💻 User Authentication
-  - Registration and secure JWT-based login
-  - Role-based access supported (optional)
+✨ Features
 
-- 📝 Create Posts
-  - Users can post their thoughts in text format
+- 🧑‍💻 **User Authentication**
+  - Secure registration and login with JWT-based session management
 
-- 👥 Follow/Unfollow
-  - Follow other users and build a social graph
+- 📝 **Post System**
+  - Users can create and view text-based posts
 
-- 📰 User Feed
-  - Personalized post feed based on followed users
-  - Cached using Redis for better performance
+- 👥 **Follow/Unfollow**
+  - Maintain a social graph using Neo4j for scalable relationship modeling
 
-- ❤️ Like System
-  - Like and unlike any post
+- 📰 **Personalized Feed**
+  - Feed generation based on following graph using Neo4j traversal
+  - Feed cached in Redis to optimize performance
 
-- 🧠 User Suggestions
-  - Suggested users to follow based on mutual connections
+- ❤️ **Like System**
+  - Like or unlike posts with idempotent behavior
 
-- ⚡ Redis Caching
-  - Profile and feed data cached to reduce DB hits
+- 🔔 **Real-time Notifications**
+  - Implemented using WebSocket (e.g., when followed or post liked)
 
-- 🔍 Search user or post
-   - One can search user or post
+- 🧠 **User Suggestions**
+  - Suggested users to follow based on mutual connections (graph-based logic)
 
- 🚀 Getting Started
+- 🔍 **Search Functionality**
+  - Search users or posts by keywords (MySQL-based search)
 
-# 1. Clone the repo
+- ⚡ **Redis Caching**
+  - Cached user profiles and feeds to reduce DB hits and improve latency
+
+---
+
+🚀 Getting Started
+
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/RathodViraj/First.git
 cd First
-```
 ````
 
-# 2. Set up environment variables
+2. Set Up Environment Variables
 
-Create a `.env` file (or use environment export) with the following:
+Create a `.env` file:
 
 ```env
 DB_USER=root
 DB_PASS=yourpassword
 DB_NAME=socialmedia
 DB_HOST=localhost
+
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASS=your_neo4j_password
+
 JWT_SECRET=your_jwt_secret
+
 REDIS_ADDR=localhost:6379
 ```
 
-# 3. Run the app
+3. Run the Application
 
-bash
+```bash
 go run main.go
+```
 
+Ensure MySQL, Redis, and Neo4j are running locally before starting.
 
-Make sure Redis and MySQL servers are running locally.
+---
 
- 📁 Folder Structure
+📁 Folder Structure
 
 ```
 .
-├── handler/        # HTTP handlers (controllers)
+├── handler/        # API handlers (HTTP)
 ├── service/        # Business logic
-├── repository/     # DB and cache operations
+├── repository/     # DB and graph/cache interactions
+├── graph/          # Neo4j graph functions
+├── ws/             # WebSocket handling
 ├── model/          # Data structures (User, Post)
-├── utils/          # Utility functions (JWT, hashing)
+├── utils/          # JWT, hashing, helpers
 ├── main.go         # Entry point
 └── go.mod
 ```
 
- 📬 API Endpoints (Sample)
+---
 
- `POST /register` — Register user
- `POST /login` — Login and get JWT
- `POST /posts` — Create post
- `GET /feed` — Get personalized feed
- `POST /follow/{id}` — Follow a user
- `POST /unfollow/{id}` — Unfollow a user
- `GET /suggestions` — Get user suggestions
+## 📬 API Overview (Sample)
 
- 📌 Future Improvements
+* `POST /register` — User registration
+* `POST /login` — JWT-based login
+* `POST /posts` — Create a new post
+* `GET /feed` — Get personalized feed
+* `POST /follow/{id}` — Follow a user
+* `POST /unfollow/{id}` — Unfollow a user
+* `GET /suggestions` — Get user suggestions
+* `GET /search/users?query=` — Search users
+* `GET /search/posts?query=` — Search posts
+* WebSocket: `/ws` — Real-time notification endpoint
 
- Add comments and notifications
- Rate-limiting using Redis
- Image upload for posts
- GraphQL version (in progress)
+---
 
+🔄 Future Enhancements
 
-```
- 👨‍💻 Author
+* Add comments system
+* Notification history and storage
+* Post pagination and infinite scrolling
+* GraphQL API version
+* Role-based access and admin panel
+
+---
+
+👨‍💻 Author
 
 Viraj Rathod
-Backend Developer | [LinkedIn](www.linkedin.com/in/viraj-rathod-058ba4280) | [GitHub](github.com/RathodViraj)
+Backend Developer
+📧 [virajrathod631@gmail.com](mailto:virajrathod631@gmail.com)
+📞 +91-8799242278
+[GitHub](https://github.com/RathodViraj) | [LinkedIn]([https://linkedin.com/in/virajrathod](http://www.linkedin.com/in/viraj-rathod-058ba4280))
 
 ```
 
-
-Let me know if you'd like a shorter version too, or a README template for your next project. Once you push this to GitHub, your project will look much more professional to recruiters and collaborators.
 
