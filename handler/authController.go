@@ -22,13 +22,17 @@ func (h *AuthHandler) Login(ctx *gin.Context) {
 	var loginReq model.LoginRequest
 
 	if err := ctx.BindJSON(&loginReq); err != nil {
-		log.Printf("JSON decode error: %v", err)
 		JSONError(ctx, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
 	loginReq.Email = strings.TrimSpace(strings.ToLower(loginReq.Email))
 	loginReq.Password = strings.TrimSpace(loginReq.Password)
+	loginReq.Role = strings.TrimSpace(strings.ToLower(loginReq.Role))
+
+	if loginReq.Role == "" {
+		loginReq.Role = "user"
+	}
 
 	if loginReq.Email == "" || loginReq.Password == "" {
 		JSONError(ctx, http.StatusBadRequest, "Email and password cannot be empty")
@@ -63,6 +67,11 @@ func (h *AuthHandler) Register(ctx *gin.Context) {
 	user.Email = strings.TrimSpace(strings.ToLower(user.Email))
 	user.Name = strings.TrimSpace(user.Name)
 	user.Password = strings.TrimSpace(user.Password)
+	user.Role = strings.TrimSpace(strings.ToLower(user.Role))
+
+	if user.Role == "" {
+		JSONError(ctx, http.StatusBadRequest, "Role cannot be empty")
+	}
 
 	if user.Password == "" {
 		JSONError(ctx, http.StatusBadRequest, "Password cannot be empty")
@@ -71,14 +80,12 @@ func (h *AuthHandler) Register(ctx *gin.Context) {
 
 	hashedPassword, err := h.authService.HashPassword(user.Password)
 	if err != nil {
-		log.Printf("Password hashing error: %v", err)
 		JSONError(ctx, http.StatusInternalServerError, "Failed to process password")
 		return
 	}
 	user.Password = hashedPassword
 
 	if err := h.authService.UserSrv.RegisterUser(user); err != nil {
-		log.Printf("Registration failed: %v", err)
 		JSONError(ctx, http.StatusInternalServerError, err.Error())
 		return
 	}

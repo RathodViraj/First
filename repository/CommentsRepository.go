@@ -58,10 +58,10 @@ func (r *commentRepo) AddComment(post *model.Post) error {
 	}
 
 	query := `
-	INSERT INTO posts (uid, content, likes, parent_id) 
-	VALUES (?, ?, 0, ?)`
+	INSERT INTO posts (uid, content, parent_id) 
+	VALUES (?, ?, ?)`
 
-	res, err := r.db.Exec(query, post.Uid, post.Content, post.Likes, post.ParentId)
+	res, err := r.db.Exec(query, post.Uid, post.Content, post.ParentId)
 	if err != nil {
 		return fmt.Errorf("failed to create post: %w", err)
 	}

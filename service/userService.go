@@ -1,20 +1,18 @@
 package service
 
 import (
-	"First/graph"
 	"First/model"
 	"First/repository"
 	"fmt"
 )
 
 type UserService struct {
-	repo  repository.UserRepository
-	graph graph.Graph
-	gr    repository.Graph
+	repo repository.UserRepository
+	gr   repository.Graph
 }
 
-func NewUserService(repo repository.UserRepository, g graph.Graph, gr repository.Graph) *UserService {
-	return &UserService{repo: repo, graph: g, gr: gr}
+func NewUserService(repo repository.UserRepository, gr repository.Graph) *UserService {
+	return &UserService{repo: repo, gr: gr}
 }
 
 func (s *UserService) RegisterUser(user model.User) error {
@@ -23,9 +21,9 @@ func (s *UserService) RegisterUser(user model.User) error {
 		return fmt.Errorf("failed to create user in SQL: %v", err)
 	}
 
-	err = s.graph.CreateUserNode(user.Id)
+	err = s.gr.CreateUserNode(user.Id)
 	if err != nil {
-		_ = s.repo.DeleteUserSQL(user.Id)
+		_ = s.repo.Delete(user.Id, user.Id, true)
 		return fmt.Errorf("failed to create user in Neo4j: %v", err)
 	}
 
@@ -37,7 +35,12 @@ func (s *UserService) GetUser(id int) (*model.User, error) {
 }
 
 func (s *UserService) DeleteUser(id, userID int, isAdmin bool) error {
-	return s.repo.Delete(id, userID, isAdmin)
+	err := s.repo.Delete(id, userID, isAdmin)
+	if err != nil {
+		return err
+	}
+
+	return s.gr.DeleteUserNode(userID)
 }
 
 func (s *UserService) GetUserFeed(userID, offset int) ([]model.Post, error) {

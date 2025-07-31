@@ -10,7 +10,7 @@ import (
 
 func GinMiddleware(authService *service.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.FullPath() == "/login" || c.FullPath() == "/register" || c.FullPath() == "/" || c.FullPath() == "/home" {
+		if c.FullPath() == "/login" || c.FullPath() == "/register" || c.FullPath() == "/" || c.FullPath() == "/home" || c.FullPath() == "/ws" {
 			c.Next()
 			return
 		}

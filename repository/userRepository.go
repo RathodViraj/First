@@ -48,11 +48,11 @@ func (r *userRepo) GetByEmail(email string) (*model.User, error) {
 }
 
 func (r *userRepo) GetByID(id int) (*model.User, error) {
-	query := `SELECT id, name, email, created_at FROM users WHERE id = ?`
+	query := `SELECT id, name, email, role, created_at FROM users WHERE id = ?`
 	row := r.db.QueryRow(query, id)
 
 	var user model.User
-	err := row.Scan(&user.Id, &user.Name, &user.Email, &user.CreatedAt)
+	err := row.Scan(&user.Id, &user.Name, &user.Email, &user.Role, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("user not found")

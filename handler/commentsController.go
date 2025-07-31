@@ -2,19 +2,30 @@ package handler
 
 import (
 	"First/model"
+	"First/notification"
+	"First/repository"
 	"First/service"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type CommentsHandler struct {
 	service *service.CommentsService
+	hub     *notification.Hub
+	gr      repository.Graph
+	nr      repository.NotificationRepository
 }
 
-func NewCommentsHandler(service *service.CommentsService) *CommentsHandler {
-	return &CommentsHandler{service}
+func NewCommentsHandler(service *service.CommentsService, h *notification.Hub, gr repository.Graph, nr repository.NotificationRepository) *CommentsHandler {
+	return &CommentsHandler{
+		service,
+		h,
+		gr,
+		nr,
+	}
 }
 
 func (h *CommentsHandler) AddComment(ctx *gin.Context) {
@@ -49,8 +60,34 @@ func (h *CommentsHandler) AddComment(ctx *gin.Context) {
 		return
 	}
 
-	ctx.IndentedJSON(http.StatusCreated, comment)
+	ownerID, _ := h.gr.GetUserIDByPostID(postID)
+	if ownerID == -1 || ownerID == userID {
+		ctx.IndentedJSON(http.StatusCreated, comment)
+		return
+	}
+	notif := model.Notification{
+		Type:      "commnet",
+		FromUser:  userID,
+		ToUser:    ownerID,
+		PostID:    &postID,
+		Message:   "Someone comment on your post",
+		Timestamp: time.Now().Unix(),
+	}
+	h.hub.Broadcast <- notif
 
+	go func() {
+		_ = h.nr.SaveNotification(model.Notification{
+			Type:      "like",
+			FromUser:  userID,
+			ToUser:    ownerID,
+			PostID:    &postID,
+			Message:   "Someone comment your post",
+			Seen:      false,
+			Timestamp: time.Now().Unix(),
+		})
+	}()
+
+	ctx.IndentedJSON(http.StatusCreated, comment)
 }
 
 func (h *CommentsHandler) GetAllComments(ctx *gin.Context) {

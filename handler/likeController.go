@@ -2,19 +2,26 @@ package handler
 
 import (
 	"First/model"
+	"First/notification"
+	"First/repository"
 	"First/service"
 	"net/http"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type LikeHandler struct {
 	service *service.LikeService
+	Hub     *notification.Hub
+	gr      repository.Graph
+	nr      repository.NotificationRepository
 }
 
-func NewLikeHandler(service *service.LikeService) *LikeHandler {
-	return &LikeHandler{service}
+func NewLikeHandler(service *service.LikeService, h *notification.Hub, gr repository.Graph, nr repository.NotificationRepository) *LikeHandler {
+	return &LikeHandler{service, h, gr, nr}
 }
 
 func (h *LikeHandler) LikePost(ctx *gin.Context) {
@@ -44,6 +51,39 @@ func (h *LikeHandler) LikePost(ctx *gin.Context) {
 		JSONError(ctx, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	//notifaction logic
+	ownerID, _ := h.gr.GetUserIDByPostID(postID)
+	if ownerID == -1 || ownerID == userID {
+		ctx.Status(http.StatusCreated)
+		return
+	}
+	notif := model.Notification{
+		Type:      "like",
+		FromUser:  userID,
+		ToUser:    ownerID,
+		PostID:    &postID,
+		Message:   "Someone liked your post",
+		Timestamp: time.Now().Unix(),
+	}
+	h.Hub.Broadcast <- notif
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		_ = h.nr.SaveNotification(model.Notification{
+			Type:      "like",
+			FromUser:  userID,
+			ToUser:    ownerID,
+			PostID:    &postID,
+			Message:   "Someone liked your post",
+			Seen:      false,
+			Timestamp: time.Now().Unix(),
+		})
+		wg.Done()
+	}()
+
+	wg.Wait()
 
 	ctx.Status(http.StatusCreated)
 }

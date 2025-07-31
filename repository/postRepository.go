@@ -29,10 +29,10 @@ func NewPostRepository(db *sql.DB) PostRepository {
 
 func (r *postRepo) Create(post *model.Post) error {
 	query := `
-        INSERT INTO posts (uid, content, likes) 
-        VALUES (?, ?, 0)`
+        INSERT INTO posts (uid, content) 
+        VALUES (?, ?)`
 
-	res, err := r.db.Exec(query, post.Uid, post.Content, post.Likes)
+	res, err := r.db.Exec(query, post.Uid, post.Content)
 	if err != nil {
 		return fmt.Errorf("failed to create post: %w", err)
 	}

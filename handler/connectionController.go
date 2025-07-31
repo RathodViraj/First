@@ -2,19 +2,26 @@ package handler
 
 import (
 	cachingservice "First/cachingservice"
+	"First/model"
+	"First/notification"
+	"First/repository"
 	"First/service"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type ConnectionHandler struct {
 	service *service.ConnectionService
+	hub     *notification.Hub
+	gr      repository.Graph
+	nr      repository.NotificationRepository
 }
 
-func NewConnectionHandler(service *service.ConnectionService) *ConnectionHandler {
-	return &ConnectionHandler{service: service}
+func NewConnectionHandler(service *service.ConnectionService, hub *notification.Hub, gr repository.Graph, nr repository.NotificationRepository) *ConnectionHandler {
+	return &ConnectionHandler{service, hub, gr, nr}
 }
 
 func (h *ConnectionHandler) FollowUser(ctx *gin.Context) {
@@ -50,6 +57,29 @@ func (h *ConnectionHandler) FollowUser(ctx *gin.Context) {
 	cachingservice.InvalidateUserFollowersCache(ctx, followingID)
 	cachingservice.InvalidateUserFollowingsCache(ctx, followerID)
 	cachingservice.InvalidatemutualCache(ctx, followerID)
+
+	if followingID != followerID {
+		notif := model.Notification{
+			Type:      "Follow",
+			FromUser:  followerID,
+			ToUser:    followingID,
+			PostID:    nil,
+			Message:   "Someone start following you",
+			Timestamp: time.Now().Unix(),
+		}
+
+		h.hub.Broadcast <- notif
+	}
+
+	_ = h.nr.SaveNotification(model.Notification{
+		Type:      "like",
+		FromUser:  followerID,
+		ToUser:    followingID,
+		PostID:    nil,
+		Message:   "Someone liked your post",
+		Seen:      false,
+		Timestamp: time.Now().Unix(),
+	})
 
 	ctx.Status(http.StatusCreated)
 }

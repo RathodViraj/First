@@ -16,6 +16,9 @@ type Graph interface {
 	GetFollowersIDs(userID int) ([]int, error)
 	GetFollowingsIDs(userID int) ([]int, error)
 	GetMutualIDs(userID int) ([]int, error)
+	CreatePostNode(id, userID, parentID int) error
+	DeletePostNode(id int) error
+	GetUserIDByPostID(id int) (int, error)
 }
 
 func NewGraph(d neo4j.DriverWithContext) Graph {
@@ -147,4 +150,66 @@ func (g *graph) GetMutualIDs(userID int) ([]int, error) {
 	}
 
 	return result.([]int), nil
+}
+
+func (g *graph) CreatePostNode(id, userID, parentID int) error {
+	session := g.driver.NewSession(context.Background(), neo4j.SessionConfig{})
+	defer session.Close(context.Background())
+
+	_, err := session.ExecuteWrite(context.Background(), func(tx neo4j.ManagedTransaction) (any, error) {
+		query := `MATCH (u:User {id: $userID}) CREATE (p:Post {id: $id, pid: $parentID})-[:POSTED_BY]->(u)`
+		params := map[string]any{
+			"id":       id,
+			"userID":   userID,
+			"parentID": parentID,
+		}
+		_, err := tx.Run(context.Background(), query, params)
+		return nil, err
+	})
+	return err
+}
+
+func (g *graph) DeletePostNode(id int) error {
+	session := g.driver.NewSession(context.Background(), neo4j.SessionConfig{})
+	defer session.Close(context.Background())
+
+	_, err := session.ExecuteWrite(context.Background(), func(tx neo4j.ManagedTransaction) (any, error) {
+		query := `MATCH (p:Post {id: $id}) DETACH DELETE p`
+		params := map[string]any{"id": id}
+		_, err := tx.Run(context.Background(), query, params)
+
+		return nil, err
+	})
+
+	return err
+}
+
+func (g *graph) GetUserIDByPostID(id int) (int, error) {
+	session := g.driver.NewSession(context.Background(), neo4j.SessionConfig{})
+	defer session.Close(context.Background())
+
+	// Get the user ID who posted a given post
+	res, err := session.ExecuteRead(context.Background(), func(tx neo4j.ManagedTransaction) (any, error) {
+		query := `MATCH (p:Post {id: $id})-[:POSTED_BY]->(u:User) RETURN u.id AS userId`
+		params := map[string]any{"id": id}
+		result, err := tx.Run(context.Background(), query, params)
+		if err != nil {
+			return nil, err
+		}
+		if result.Next(context.Background()) {
+			record := result.Record()
+			idVal, _ := record.Get("userId")
+			if idInt, ok := idVal.(int64); ok {
+				return int(idInt), nil
+			}
+		}
+		return nil, result.Err()
+	})
+	if err != nil {
+		return -1, err
+	}
+	if userID, ok := res.(int); ok {
+		return userID, nil
+	}
+	return -1, nil
 }

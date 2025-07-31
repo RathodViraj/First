@@ -3,9 +3,9 @@ package main
 import (
 	cachingservice "First/cachingservice"
 	"First/db"
-	"First/graph"
 	"First/handler"
 	"First/middleware"
+	"First/notification"
 	"First/repository"
 	"First/service"
 	"context"
@@ -48,10 +48,10 @@ func main() {
 	defer RDB.Close()
 	cachingservice.SetRedies(RDB)
 
-	graph.InitNeo4j()
-	defer graph.Driver.Close(context.Background())
+	db.InitNeo4j()
+	defer db.Driver.Close(context.Background())
 
-	session := graph.Driver.NewSession(context.Background(), neo4j.SessionConfig{})
+	session := db.Driver.NewSession(context.Background(), neo4j.SessionConfig{})
 	defer session.Close(context.Background())
 
 	_, err = session.ExecuteRead(context.Background(), func(tx neo4j.ManagedTransaction) (any, error) {
@@ -68,33 +68,36 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// fmt.Println(result)
 
 	userRepo := repository.NewUserRepository(dbConn)
 	postRepo := repository.NewPostRepository(dbConn)
 	commentRepo := repository.NewCommentRepo(dbConn)
-	graphRepo := repository.NewGraph(graph.Driver)
+	graphRepo := repository.NewGraph(db.Driver)
 	connectionRepo := repository.NewConnectionRepo(dbConn, graphRepo)
-	likeRepo := repository.NewLikeRepo(dbConn)
+	likeRepo := repository.NewLikeRepo(dbConn, graphRepo, userRepo)
 	searchRepo := repository.NewSearchRepo(dbConn)
+	notificationRepo := repository.NewNotificationRepo(dbConn)
 
-	g := graph.Graph{}
+	hub := notification.NewHub()
+	go hub.Run()
 
-	userService := service.NewUserService(userRepo, g, graphRepo)
-	postService := service.NewPostService(postRepo)
-	commentsService := service.NewCommentsService(commentRepo)
+	userService := service.NewUserService(userRepo, graphRepo)
+	postService := service.NewPostService(postRepo, graphRepo)
+	commentsService := service.NewCommentsService(commentRepo, graphRepo)
 	connectionService := service.NewConnectionService(connectionRepo, graphRepo)
 	authService := service.NewAuthService(userService)
 	likeService := service.NewLikeService(likeRepo)
 	searchService := service.NewSearchService(searchRepo)
+	notificationService := service.NewNotificationService(notificationRepo)
 
 	userHandler := handler.NewUserHandler(userService, postService)
 	postHandler := handler.NewPostHandler(postService, connectionService)
-	commentsHandler := handler.NewCommentsHandler(commentsService)
-	connectionHandler := handler.NewConnectionHandler(connectionService)
+	commentsHandler := handler.NewCommentsHandler(commentsService, hub, graphRepo, notificationRepo)
+	connectionHandler := handler.NewConnectionHandler(connectionService, hub, graphRepo, notificationRepo)
 	authHandler := handler.NewAuthHandler(authService)
-	likeHandler := handler.NewLikeHandler(likeService)
+	likeHandler := handler.NewLikeHandler(likeService, hub, graphRepo, notificationRepo)
 	searchHandler := handler.NewSearchHandler(searchService)
+	notificationHandler := handler.NewNotificationHandler(notificationService)
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
@@ -124,10 +127,12 @@ func main() {
 	// Home feed (recent posts from everyone)
 	router.GET("/home", postHandler.RecentPosts)
 
-	// Posts
+	// Posts routes
 	router.POST("/posts", postHandler.CreatePost)
 	router.GET("/posts/:id", postHandler.GetPost)
 	router.DELETE("/posts/:id", postHandler.DeletePost)
+
+	// like routes
 	router.POST("/posts/:id/like", likeHandler.LikePost)
 	router.DELETE("/posts/:id/like", likeHandler.UnlikePost)
 	router.GET("/posts/:id/likes", likeHandler.GetLikes)
@@ -153,6 +158,12 @@ func main() {
 	// Search routes
 	router.GET("/search/users", searchHandler.SearchUser)
 	router.GET("/search/posts", searchHandler.SearchPost)
+
+	router.GET("/users/:id/notifications", notificationHandler.GetNotificationsByUser)
+
+	router.GET("/ws", func(ctx *gin.Context) {
+		handler.ServeWS(hub, ctx)
+	})
 
 	srv := &http.Server{
 		Addr:    ":8080",
