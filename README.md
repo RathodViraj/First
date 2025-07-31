@@ -19,32 +19,32 @@ A mini social media backend built in Go where users can register, login, post th
 
 ✨ Features
 
-- 🧑‍💻 **User Authentication**
+- 🧑‍💻 User Authentication
   - Secure registration and login with JWT-based session management
 
-- 📝 **Post System**
+- 📝 Post System
   - Users can create and view text-based posts
 
-- 👥 **Follow/Unfollow**
+- 👥 Follow/Unfollow
   - Maintain a social graph using Neo4j for scalable relationship modeling
 
-- 📰 **Personalized Feed**
+- 📰 Personalized Feed
   - Feed generation based on following graph using Neo4j traversal
   - Feed cached in Redis to optimize performance
 
-- ❤️ **Like System**
+- ❤️ Like System
   - Like or unlike posts with idempotent behavior
 
-- 🔔 **Real-time Notifications**
+- 🔔 Real-time Notifications
   - Implemented using WebSocket (e.g., when followed or post liked)
 
-- 🧠 **User Suggestions**
+- 🧠 User Suggestions
   - Suggested users to follow based on mutual connections (graph-based logic)
 
-- 🔍 **Search Functionality**
+- 🔍 Search Functionality
   - Search users or posts by keywords (MySQL-based search)
 
-- ⚡ **Redis Caching**
+- ⚡ Redis Caching
   - Cached user profiles and feeds to reduce DB hits and improve latency
 
 ---
@@ -102,9 +102,9 @@ Ensure MySQL, Redis, and Neo4j are running locally before starting.
 └── go.mod
 ```
 
----
 
-## 📬 API Overview (Sample)
+
+📬 API Overview (Sample)
 
 * `POST /register` — User registration
 * `POST /login` — JWT-based login
@@ -117,7 +117,7 @@ Ensure MySQL, Redis, and Neo4j are running locally before starting.
 * `GET /search/posts?query=` — Search posts
 * WebSocket: `/ws` — Real-time notification endpoint
 
----
+
 
 🔄 Future Enhancements
 
@@ -127,16 +127,14 @@ Ensure MySQL, Redis, and Neo4j are running locally before starting.
 * GraphQL API version
 * Role-based access and admin panel
 
----
-
+```
 👨‍💻 Author
 
 Viraj Rathod
 Backend Developer
 📧 [virajrathod631@gmail.com](mailto:virajrathod631@gmail.com)
 📞 +91-8799242278
-[GitHub](https://github.com/RathodViraj) | [LinkedIn]([https://linkedin.com/in/virajrathod](http://www.linkedin.com/in/viraj-rathod-058ba4280))
-
+[GitHub](https://github.com/RathodViraj) | [LinkedIn](http://www.linkedin.com/in/viraj-rathod-058ba4280)
 ```
 
 
