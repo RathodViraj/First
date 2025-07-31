@@ -51,11 +51,12 @@ A mini social media backend built in Go where users can register, login, post th
 
 🚀 Getting Started
 
-### 1. Clone the Repository
+1. Clone the Repository
 
-```bash
+```
 git clone https://github.com/RathodViraj/First.git
 cd First
+```
 ````
 
 2. Set Up Environment Variables
