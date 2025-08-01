@@ -6,6 +6,7 @@ import (
 	"First/notification"
 	"First/repository"
 	"First/service"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -69,14 +70,15 @@ func (h *ConnectionHandler) FollowUser(ctx *gin.Context) {
 		}
 
 		h.hub.Broadcast <- notif
+		log.Println("Sending notification via hub")
 	}
 
 	_ = h.nr.SaveNotification(model.Notification{
-		Type:      "like",
+		Type:      "follow",
 		FromUser:  followerID,
 		ToUser:    followingID,
 		PostID:    nil,
-		Message:   "Someone liked your post",
+		Message:   "Someone start following you",
 		Seen:      false,
 		Timestamp: time.Now().Unix(),
 	})

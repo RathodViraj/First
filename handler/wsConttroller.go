@@ -26,9 +26,14 @@ func ServeWS(hub *notification.Hub, ctx *gin.Context) {
 
 	log.Println("WebSocket connection established")
 
-	// For local testing, always use userID 25
-	var userID int = 25
-	log.Println("For testing, using userID 25 for WebSocket connection")
+	uidVal, exists := ctx.Get("userID")
+	var userID int
+	if !exists {
+		userID = 25 // or any test user ID
+		log.Println("userID not found in context, using default:", userID)
+	} else {
+		userID, _ = uidVal.(int)
+	}
 
 	client := &notification.Client{
 		UserID: userID,

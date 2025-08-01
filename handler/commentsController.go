@@ -5,6 +5,7 @@ import (
 	"First/notification"
 	"First/repository"
 	"First/service"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -65,6 +66,7 @@ func (h *CommentsHandler) AddComment(ctx *gin.Context) {
 		ctx.IndentedJSON(http.StatusCreated, comment)
 		return
 	}
+
 	notif := model.Notification{
 		Type:      "commnet",
 		FromUser:  userID,
@@ -74,18 +76,17 @@ func (h *CommentsHandler) AddComment(ctx *gin.Context) {
 		Timestamp: time.Now().Unix(),
 	}
 	h.hub.Broadcast <- notif
+	log.Println("Sending notification via hub")
 
-	go func() {
-		_ = h.nr.SaveNotification(model.Notification{
-			Type:      "like",
-			FromUser:  userID,
-			ToUser:    ownerID,
-			PostID:    &postID,
-			Message:   "Someone comment your post",
-			Seen:      false,
-			Timestamp: time.Now().Unix(),
-		})
-	}()
+	_ = h.nr.SaveNotification(model.Notification{
+		Type:      "comment",
+		FromUser:  userID,
+		ToUser:    ownerID,
+		PostID:    &postID,
+		Message:   "Someone comment on your post",
+		Seen:      false,
+		Timestamp: time.Now().Unix(),
+	})
 
 	ctx.IndentedJSON(http.StatusCreated, comment)
 }

@@ -5,9 +5,9 @@ import (
 	"First/notification"
 	"First/repository"
 	"First/service"
+	"log"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -58,6 +58,7 @@ func (h *LikeHandler) LikePost(ctx *gin.Context) {
 		ctx.Status(http.StatusCreated)
 		return
 	}
+
 	notif := model.Notification{
 		Type:      "like",
 		FromUser:  userID,
@@ -67,23 +68,17 @@ func (h *LikeHandler) LikePost(ctx *gin.Context) {
 		Timestamp: time.Now().Unix(),
 	}
 	h.Hub.Broadcast <- notif
+	log.Println("Sending notification via hub")
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		_ = h.nr.SaveNotification(model.Notification{
-			Type:      "like",
-			FromUser:  userID,
-			ToUser:    ownerID,
-			PostID:    &postID,
-			Message:   "Someone liked your post",
-			Seen:      false,
-			Timestamp: time.Now().Unix(),
-		})
-		wg.Done()
-	}()
-
-	wg.Wait()
+	_ = h.nr.SaveNotification(model.Notification{
+		Type:      "like",
+		FromUser:  userID,
+		ToUser:    ownerID,
+		PostID:    &postID,
+		Message:   "Someone liked your post",
+		Seen:      false,
+		Timestamp: time.Now().Unix(),
+	})
 
 	ctx.Status(http.StatusCreated)
 }
